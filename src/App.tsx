@@ -6,7 +6,10 @@ import { Dashboard } from './components/Dashboard';
 import { ProjectionsPanel } from './components/ProjectionsPanel';
 import type { ProjectionState } from './components/ProjectionsPanel';
 
+export type UnitSystem = 'metric' | 'imperial';
+
 function App() {
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
   const [inputs, setInputs] = useState<UserInputs>({
     age: 30,
     sex: 'male',
@@ -60,7 +63,12 @@ function App() {
 
         {/* Left Column: Inputs */}
         <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6">
-          <InputForm inputs={inputs} setInputs={setInputs} />
+          <InputForm
+            inputs={inputs}
+            setInputs={setInputs}
+            unitSystem={unitSystem}
+            setUnitSystem={setUnitSystem}
+          />
           <ProjectionsPanel projections={projections} setProjections={setProjections} />
         </div>
 
