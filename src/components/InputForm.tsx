@@ -1,26 +1,69 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { UserInputs } from '../utils/calculations';
-import { User, Heart, Zap, Wine, Scale } from 'lucide-react';
+import { User, Heart, Zap, Wine, Scale, Ruler } from 'lucide-react';
 
 interface InputFormProps {
   inputs: UserInputs;
   setInputs: React.Dispatch<React.SetStateAction<UserInputs>>;
 }
 
+type UnitSystem = 'metric' | 'imperial';
+
 export const InputForm: React.FC<InputFormProps> = ({ inputs, setInputs }) => {
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>('imperial');
+
   const handleChange = (field: keyof UserInputs, value: any) => {
     setInputs(prev => ({ ...prev, [field]: value }));
   };
 
+  // Helper conversions
+  const toLbs = (kg: number) => Math.round(kg * 2.20462);
+  const toKg = (lbs: number) => lbs / 2.20462;
+
+  const toInches = (cm: number) => Math.round(cm / 2.54);
+  const toCmFromInches = (inches: number) => inches * 2.54;
+
+  const getHeightImperial = () => {
+    const totalInches = inputs.height / 2.54;
+    const ft = Math.floor(totalInches / 12);
+    const inch = Math.round(totalInches % 12);
+    return { ft, inch };
+  };
+
+  const updateHeightImperial = (ft: number, inch: number) => {
+    const totalInches = ft * 12 + inch;
+    handleChange('height', Math.round(totalInches * 2.54));
+  };
+
+  const { ft, inch } = getHeightImperial();
+
   return (
     <div className="glass-panel p-6 rounded-2xl h-full overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-          Your Metrics
-        </h2>
-        <p className="text-gray-500 text-xs mt-1">
-          Input your data to generate your performance profile.
-        </p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+            <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            Your Metrics
+            </h2>
+            <p className="text-gray-500 text-xs mt-1">
+            Input your data to generate your performance profile.
+            </p>
+        </div>
+
+        {/* Unit Toggle */}
+        <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+            <button
+                onClick={() => setUnitSystem('metric')}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${unitSystem === 'metric' ? 'bg-blue-500/20 text-blue-400' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+                Metric
+            </button>
+            <button
+                onClick={() => setUnitSystem('imperial')}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${unitSystem === 'imperial' ? 'bg-blue-500/20 text-blue-400' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+                Imperial
+            </button>
+        </div>
       </div>
 
       <div className="space-y-8">
@@ -50,21 +93,51 @@ export const InputForm: React.FC<InputFormProps> = ({ inputs, setInputs }) => {
                 <option value="female">Female</option>
               </select>
             </div>
+
+            {/* Height Input */}
+            {unitSystem === 'metric' ? (
+                <div>
+                <label className="block text-xs text-gray-400 mb-1">Height (cm)</label>
+                <input
+                    type="number"
+                    value={Math.round(inputs.height)}
+                    onChange={(e) => handleChange('height', Number(e.target.value))}
+                    className="w-full glass-input rounded-lg p-2.5 text-sm"
+                />
+                </div>
+            ) : (
+                <div className="col-span-1 grid grid-cols-2 gap-2">
+                    <div>
+                        <label className="block text-xs text-gray-400 mb-1">Height (ft)</label>
+                        <input
+                            type="number"
+                            value={ft}
+                            onChange={(e) => updateHeightImperial(Number(e.target.value), inch)}
+                            className="w-full glass-input rounded-lg p-2.5 text-sm"
+                        />
+                    </div>
+                     <div>
+                        <label className="block text-xs text-gray-400 mb-1">(in)</label>
+                        <input
+                            type="number"
+                            value={inch}
+                            onChange={(e) => updateHeightImperial(ft, Number(e.target.value))}
+                            className="w-full glass-input rounded-lg p-2.5 text-sm"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Weight Input */}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Height (cm)</label>
+              <label className="block text-xs text-gray-400 mb-1">Weight ({unitSystem === 'metric' ? 'kg' : 'lbs'})</label>
               <input
                 type="number"
-                value={inputs.height}
-                onChange={(e) => handleChange('height', Number(e.target.value))}
-                className="w-full glass-input rounded-lg p-2.5 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Weight (kg)</label>
-              <input
-                type="number"
-                value={inputs.weight}
-                onChange={(e) => handleChange('weight', Number(e.target.value))}
+                value={unitSystem === 'metric' ? Math.round(inputs.weight) : toLbs(inputs.weight)}
+                onChange={(e) => {
+                    const val = Number(e.target.value);
+                    handleChange('weight', unitSystem === 'metric' ? val : toKg(val));
+                }}
                 className="w-full glass-input rounded-lg p-2.5 text-sm"
               />
             </div>
@@ -88,12 +161,19 @@ export const InputForm: React.FC<InputFormProps> = ({ inputs, setInputs }) => {
               />
             </div>
              <div>
-              <label className="block text-xs text-gray-400 mb-1">Waist (cm) <span className="text-gray-600">(opt)</span></label>
+              <label className="block text-xs text-gray-400 mb-1">Waist ({unitSystem === 'metric' ? 'cm' : 'in'}) <span className="text-gray-600">(opt)</span></label>
               <input
                 type="number"
-                value={inputs.waistCircumference || ''}
-                 placeholder="Ex: 80"
-                onChange={(e) => handleChange('waistCircumference', e.target.value ? Number(e.target.value) : undefined)}
+                value={
+                    inputs.waistCircumference
+                    ? (unitSystem === 'metric' ? Math.round(inputs.waistCircumference) : toInches(inputs.waistCircumference))
+                    : ''
+                }
+                 placeholder={unitSystem === 'metric' ? "Ex: 80" : "Ex: 32"}
+                onChange={(e) => {
+                    const val = e.target.value ? Number(e.target.value) : undefined;
+                    handleChange('waistCircumference', val !== undefined ? (unitSystem === 'metric' ? val : toCmFromInches(val)) : undefined);
+                }}
                 className="w-full glass-input rounded-lg p-2.5 text-sm"
               />
             </div>

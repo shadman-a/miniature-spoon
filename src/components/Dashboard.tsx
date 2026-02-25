@@ -4,6 +4,8 @@ import type { Variants } from 'framer-motion';
 import type { UserInputs, UserMetrics } from '../utils/calculations';
 import { BodyViz } from './BodyViz';
 import { HealthRadar, ProjectionLineChart, ImpactBarChart } from './Charts';
+import { Recommendations } from './Recommendations';
+import { NewsFeed } from './NewsFeed';
 import { Activity, Heart, Brain, TrendingUp } from 'lucide-react';
 
 interface DashboardProps {
@@ -102,7 +104,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ metrics, inputs }) => {
            </div>
            <div className="flex flex-col border-l border-white/5 pl-0 md:pl-6 pt-6 md:pt-0 border-t md:border-t-0">
                <h3 className="text-sm font-semibold text-white/80 mb-4 text-center">Physiological Map</h3>
-               <BodyViz inputs={inputs} />
+               <BodyViz inputs={inputs} metrics={metrics} />
            </div>
         </motion.div>
 
@@ -125,6 +127,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ metrics, inputs }) => {
               </div>
            </div>
         </motion.div>
+      </div>
+
+      {/* Bottom Row: Plans & News */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
+         {/* Recommendations (Span 2) */}
+         <motion.div variants={itemVariants} className="lg:col-span-2">
+            <Recommendations inputs={inputs} metrics={metrics} />
+         </motion.div>
+
+         {/* News (Span 1) */}
+         <motion.div variants={itemVariants}>
+            <NewsFeed />
+         </motion.div>
       </div>
 
     </motion.div>
