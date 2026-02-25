@@ -4,6 +4,8 @@ import type { Variants } from 'framer-motion';
 import type { UserInputs, UserMetrics } from '../utils/calculations';
 import { BodyViz } from './BodyViz';
 import { HealthRadar, ProjectionLineChart, ImpactBarChart } from './Charts';
+import { Recommendations } from './Recommendations';
+import { NewsFeed } from './NewsFeed';
 import { Activity, Heart, Brain, TrendingUp } from 'lucide-react';
 
 interface DashboardProps {
@@ -124,6 +126,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ metrics, inputs }) => {
                  <ImpactBarChart metrics={metrics} inputs={inputs} />
               </div>
            </div>
+        </motion.div>
+      </div>
+
+      {/* Row 3: Recommendations & News */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
+        <motion.div variants={itemVariants} className="lg:col-span-2 h-full">
+           <Recommendations inputs={inputs} metrics={metrics} />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="lg:col-span-1 h-full">
+           <NewsFeed />
         </motion.div>
       </div>
 

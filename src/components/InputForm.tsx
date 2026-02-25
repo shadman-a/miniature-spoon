@@ -1,26 +1,79 @@
 import React from 'react';
 import type { UserInputs } from '../utils/calculations';
-import { User, Heart, Zap, Wine, Scale } from 'lucide-react';
+import { User, Heart, Zap, Wine, Scale, Ruler } from 'lucide-react';
 
 interface InputFormProps {
   inputs: UserInputs;
   setInputs: React.Dispatch<React.SetStateAction<UserInputs>>;
+  unitSystem: 'metric' | 'imperial';
+  setUnitSystem: React.Dispatch<React.SetStateAction<'metric' | 'imperial'>>;
 }
 
-export const InputForm: React.FC<InputFormProps> = ({ inputs, setInputs }) => {
+export const InputForm: React.FC<InputFormProps> = ({ inputs, setInputs, unitSystem, setUnitSystem }) => {
+  const isMetric = unitSystem === 'metric';
+
   const handleChange = (field: keyof UserInputs, value: any) => {
     setInputs(prev => ({ ...prev, [field]: value }));
   };
 
+  // Conversions
+  const toLbs = (kg: number) => Math.round(kg * 2.20462);
+  const toKg = (lbs: number) => lbs / 2.20462;
+
+  const toFtIn = (cm: number) => {
+    const totalInches = cm / 2.54;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches % 12);
+    return { feet, inches };
+  };
+
+  const toCm = (ft: number, inc: number) => (ft * 12 + inc) * 2.54;
+
+  const toInches = (cm: number) => Math.round(cm / 2.54);
+  const inchToCm = (inc: number) => inc * 2.54;
+
+  const handleWeightChange = (val: number) => {
+    if (isMetric) handleChange('weight', val);
+    else handleChange('weight', toKg(val));
+  };
+
+  const handleHeightChangeFt = (ft: number) => {
+    const { inches } = toFtIn(inputs.height);
+    handleChange('height', toCm(ft, inches));
+  };
+
+  const handleHeightChangeIn = (inc: number) => {
+    const { feet } = toFtIn(inputs.height);
+    handleChange('height', toCm(feet, inc));
+  };
+
+  const handleWaistChange = (val: number) => {
+    if (isMetric) handleChange('waistCircumference', val);
+    else handleChange('waistCircumference', inchToCm(val));
+  };
+
   return (
     <div className="glass-panel p-6 rounded-2xl h-full overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-          Your Metrics
-        </h2>
-        <p className="text-gray-500 text-xs mt-1">
-          Input your data to generate your performance profile.
-        </p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            Your Metrics
+          </h2>
+          <p className="text-gray-500 text-xs mt-1">
+            Input your data to generate your performance profile.
+          </p>
+        </div>
+
+        {/* Unit Toggle */}
+        <button
+          onClick={() => setUnitSystem(prev => prev === 'metric' ? 'imperial' : 'metric')}
+          className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
+        >
+          <Ruler size={14} className="text-blue-400" />
+          <span className="text-xs font-medium text-gray-300">
+            {isMetric ? 'Metric' : 'Imperial'}
+          </span>
+        </button>
       </div>
 
       <div className="space-y-8">
@@ -50,21 +103,47 @@ export const InputForm: React.FC<InputFormProps> = ({ inputs, setInputs }) => {
                 <option value="female">Female</option>
               </select>
             </div>
+
+            {/* Height Input */}
+            {isMetric ? (
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Height (cm)</label>
+                <input
+                  type="number"
+                  value={Math.round(inputs.height)}
+                  onChange={(e) => handleChange('height', Number(e.target.value))}
+                  className="w-full glass-input rounded-lg p-2.5 text-sm"
+                />
+              </div>
+            ) : (
+              <div className="col-span-1">
+                <label className="block text-xs text-gray-400 mb-1">Height (ft / in)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Ft"
+                    value={toFtIn(inputs.height).feet}
+                    onChange={(e) => handleHeightChangeFt(Number(e.target.value))}
+                    className="w-full glass-input rounded-lg p-2.5 text-sm"
+                  />
+                  <input
+                    type="number"
+                    placeholder="In"
+                    value={toFtIn(inputs.height).inches}
+                    onChange={(e) => handleHeightChangeIn(Number(e.target.value))}
+                    className="w-full glass-input rounded-lg p-2.5 text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Weight Input */}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Height (cm)</label>
+              <label className="block text-xs text-gray-400 mb-1">Weight ({isMetric ? 'kg' : 'lbs'})</label>
               <input
                 type="number"
-                value={inputs.height}
-                onChange={(e) => handleChange('height', Number(e.target.value))}
-                className="w-full glass-input rounded-lg p-2.5 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Weight (kg)</label>
-              <input
-                type="number"
-                value={inputs.weight}
-                onChange={(e) => handleChange('weight', Number(e.target.value))}
+                value={isMetric ? Math.round(inputs.weight) : toLbs(inputs.weight)}
+                onChange={(e) => handleWeightChange(Number(e.target.value))}
                 className="w-full glass-input rounded-lg p-2.5 text-sm"
               />
             </div>
@@ -88,12 +167,12 @@ export const InputForm: React.FC<InputFormProps> = ({ inputs, setInputs }) => {
               />
             </div>
              <div>
-              <label className="block text-xs text-gray-400 mb-1">Waist (cm) <span className="text-gray-600">(opt)</span></label>
+              <label className="block text-xs text-gray-400 mb-1">Waist ({isMetric ? 'cm' : 'in'}) <span className="text-gray-600">(opt)</span></label>
               <input
                 type="number"
-                value={inputs.waistCircumference || ''}
-                 placeholder="Ex: 80"
-                onChange={(e) => handleChange('waistCircumference', e.target.value ? Number(e.target.value) : undefined)}
+                value={inputs.waistCircumference ? (isMetric ? inputs.waistCircumference : toInches(inputs.waistCircumference)) : ''}
+                 placeholder={isMetric ? "Ex: 80" : "Ex: 32"}
+                onChange={(e) => handleWaistChange(Number(e.target.value))}
                 className="w-full glass-input rounded-lg p-2.5 text-sm"
               />
             </div>
